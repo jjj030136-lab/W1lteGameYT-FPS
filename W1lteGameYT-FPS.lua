@@ -27,8 +27,7 @@ FPS.Settings = {
     BlurSize = 20,
     Flatten = true,
     ShowFPS = true,
-    FlipKey = Enum.KeyCode.C, -- << КНОПКА РАЗВОРОТА КАМЕРЫ НА 180° (можно поменять на любую, напр. Enum.KeyCode.X)
-    FlipEnabled = false
+    FlipKey = Enum.KeyCode.C, -- << flip key, e.g. Enum.KeyCode.X
 }
 
 FPS.Originals = {}
@@ -244,7 +243,7 @@ function FPS:ApplyFPSLimit()
         pcall(fn, (limit <= 0) and 999 or limit)
     elseif not self.Warned then
         self.Warned = true
-        warn("[W1lteGameYT FPS] setfpscap РЅРµ РїРѕРґРґРµСЂР¶РёРІР°РµС‚СЃСЏ СЌС‚РёРј СЌРєСЃРїР»РѕРёС‚РѕРј")
+        warn("[W1lteGameYT FPS] setfpscap не поддерживается этим эксплоитом")
     end
 end
 
@@ -337,25 +336,25 @@ Workspace.DescendantAdded:Connect(function(item)
     end
 end)
 
-local mainTab = win:Tab("РћСЃРЅРѕРІРЅРѕРµ")
+local mainTab = win:Tab("Основное")
 
 mainTab:Label("> W1lteGameYT FPS Boost v1.2")
-mainTab:Label("F10 - РѕС‚РєСЂС‹С‚СЊ/Р·Р°РєСЂС‹С‚СЊ РјРµРЅСЋ")
+mainTab:Label("F10 - открыть/закрыть меню")
 
-mainTab:Label("C - разворот камеры 180° (вид назад)")
+mainTab:Label("C — разворот камеры на 180°")
 
 local fpsLabel = mainTab:Label("FPS: --")
 
-mainTab:Dropdown("РџСЂРµСЃРµС‚", {"РњР°РєСЃ FPS (РјС‹Р»Рѕ)", "РќРёР·РєРѕРµ", "РЎСЂРµРґРЅРµРµ", "Р’С‹СЃРѕРєРѕРµ", "РћСЂРёРіРёРЅР°Р»"}, function(value)
-    if value == "РћСЂРёРіРёРЅР°Р»" then
+mainTab:Dropdown("Пресет", {"Макс FPS (мыло)", "Низкое", "Среднее", "Высокое", "Оригинал"}, function(value)
+    if value == "Оригинал" then
         FPS:RestoreAll()
         return
     end
     local p = {
-        ["РњР°РєСЃ FPS (РјС‹Р»Рѕ)"] = { Quality = 0, Shadows = false, Fog = true, Effects = false, Particles = false, Bright = true, FPSLimit = 0, Blurred = false, BlurSize = 20, Flatten = true },
-        ["РќРёР·РєРѕРµ"] = { Quality = 2, Shadows = false, Fog = true, Effects = false, Particles = false, Bright = true, FPSLimit = 144, Blurred = false, BlurSize = 0, Flatten = false },
-        ["РЎСЂРµРґРЅРµРµ"] = { Quality = 5, Shadows = true, Fog = false, Effects = true, Particles = true, Bright = true, FPSLimit = 60, Blurred = false, BlurSize = 0, Flatten = false },
-        ["Р’С‹СЃРѕРєРѕРµ"] = { Quality = 10, Shadows = true, Fog = false, Effects = true, Particles = true, Bright = false, FPSLimit = 60, Blurred = false, BlurSize = 0, Flatten = false }
+        ["Макс FPS (мыло)"] = { Quality = 0, Shadows = false, Fog = true, Effects = false, Particles = false, Bright = true, FPSLimit = 0, Blurred = false, BlurSize = 20, Flatten = true },
+        ["Низкое"] = { Quality = 2, Shadows = false, Fog = true, Effects = false, Particles = false, Bright = true, FPSLimit = 144, Blurred = false, BlurSize = 0, Flatten = false },
+        ["Среднее"] = { Quality = 5, Shadows = true, Fog = false, Effects = true, Particles = true, Bright = true, FPSLimit = 60, Blurred = false, BlurSize = 0, Flatten = false },
+        ["Высокое"] = { Quality = 10, Shadows = true, Fog = false, Effects = true, Particles = true, Bright = false, FPSLimit = 60, Blurred = false, BlurSize = 0, Flatten = false }
     }
     local s = p[value]
     if not s then return end
@@ -372,93 +371,90 @@ mainTab:Dropdown("РџСЂРµСЃРµС‚", {"РњР°РєСЃ FPS (РјС‹�
     FPS:ApplyAll()
 end)
 
-mainTab:Slider("РљР°С‡РµСЃС‚РІРѕ РіСЂР°С„РёРєРё (0-10)", 0, 10, FPS.Settings.Quality, function(value)
+mainTab:Slider("Качество графики (0-10)", 0, 10, FPS.Settings.Quality, function(value)
     FPS.Settings.Quality = math.floor(value)
     FPS:ApplyQuality()
 end)
 
-mainTab:Toggle("РўРµРЅРё", FPS.Settings.Shadows, function(val)
+mainTab:Toggle("Тени", FPS.Settings.Shadows, function(val)
     FPS.Settings.Shadows = val
     FPS:ApplyShadows()
 end)
 
-mainTab:Toggle("РЈР±СЂР°С‚СЊ С‚СѓРјР°РЅ", FPS.Settings.Fog, function(val)
+mainTab:Toggle("Убрать туман", FPS.Settings.Fog, function(val)
     FPS.Settings.Fog = val
     FPS:ApplyFog()
 end)
 
-mainTab:Toggle("РЈР±СЂР°С‚СЊ СЌС„С„РµРєС‚С‹ Рё Р°С‚РјРѕСЃС„РµСЂСѓ", FPS.Settings.Effects, function(val)
+mainTab:Toggle("Убрать эффекты и атмосферу", FPS.Settings.Effects, function(val)
     FPS.Settings.Effects = val
     FPS:ApplyEffects()
 end)
 
-mainTab:Toggle("РЈР±СЂР°С‚СЊ С‡Р°СЃС‚РёС†С‹", FPS.Settings.Particles, function(val)
+mainTab:Toggle("Убрать частицы", FPS.Settings.Particles, function(val)
     FPS.Settings.Particles = val
     FPS:ApplyParticles()
 end)
 
-mainTab:Toggle("РњС‹Р»СЊРЅС‹Рµ С‚РµРєСЃС‚СѓСЂС‹ РјРёСЂР° (РїРѕР»С‹/СЃС‚РµРЅС‹)", FPS.Settings.Flatten, function(val)
+mainTab:Toggle("Мыльные текстуры мира (полы/стены)", FPS.Settings.Flatten, function(val)
     FPS.Settings.Flatten = val
     FPS:ApplyFlatten()
 end)
 
-mainTab:Toggle("Р Р°Р·РјС‹С‚РёРµ СЌРєСЂР°РЅР°", FPS.Settings.Blurred, function(val)
+mainTab:Toggle("Размытие экрана", FPS.Settings.Blurred, function(val)
     FPS.Settings.Blurred = val
     FPS:ApplyBlur()
 end)
 
-mainTab:Slider("РЎРёР»Р° СЂР°Р·РјС‹С‚РёСЏ (0-40)", 0, 40, FPS.Settings.BlurSize, function(value)
+mainTab:Slider("Сила размытия (0-40)", 0, 40, FPS.Settings.BlurSize, function(value)
     FPS.Settings.BlurSize = math.floor(value)
     FPS:ApplyBlur()
 end)
 
-mainTab:Toggle("РЇСЂРєРёР№ СЃРІРµС‚ (РёРіСЂРѕРєРѕРІ РІРёРґРЅРѕ РѕС‚Р»РёС‡РЅРѕ)", FPS.Settings.Bright, function(val)
+mainTab:Toggle("Яркий свет (игроков видно отлично)", FPS.Settings.Bright, function(val)
     FPS.Settings.Bright = val
     FPS:ApplyLighting()
 end)
 
-mainTab:Slider("Р›РёРјРёС‚ FPS (0 = Р±РµР· Р»РёРјРёС‚Р°)", 0, 1000, FPS.Settings.FPSLimit, function(value)
+mainTab:Slider("Лимит FPS (0 = без лимита)", 0, 1000, FPS.Settings.FPSLimit, function(value)
     FPS.Settings.FPSLimit = math.floor(value)
     FPS:ApplyFPSLimit()
 end)
 
-mainTab:Toggle("Развернуть камеру 180° (вид назад)", FPS.Settings.FlipEnabled, function(val)
-    FPS.Settings.FlipEnabled = val
-end)
-
 mainTab:Button("Развернуть камеру на 180° (кнопка: " .. FPS.Settings.FlipKey.Name .. ")", function()
-    FPS.Settings.FlipEnabled = not FPS.Settings.FlipEnabled
+    if FPS.Flip then FPS.Flip() end
 end)
 
-mainTab:Toggle("РџРѕРєР°Р·С‹РІР°С‚СЊ FPS", FPS.Settings.ShowFPS, function(val)
+mainTab:Toggle("Показывать FPS", FPS.Settings.ShowFPS, function(val)
     FPS.Settings.ShowFPS = val
 end)
 
-mainTab:Button("РЎР±СЂРѕСЃРёС‚СЊ РІСЃС‘ (РІРµСЂРЅСѓС‚СЊ РѕСЂРёРіРёРЅР°Р»)", function()
+mainTab:Button("Сбросить всё (вернуть оригинал)", function()
     FPS:RestoreAll()
 end)
 
--- ============ РАЗВОРОТ КАМЕРЫ НА 180° ============
--- Нажатие кнопки (по умолчанию C) = мгновенный разворот камеры на 180°.
--- Ещё одно нажатие = разворот обратно. Кнопку можно поменять в FPS.Settings.FlipKey.
+-- ============ 180 DEGREE CAMERA FLIP ============
+-- Press the flip key (default C) -> the view instantly rotates 180 degrees, one time.
+-- Press again -> rotates back. No per-frame correction, so no camera jitter.
 
-local function SetFlip(state)
-    FPS.Settings.FlipEnabled = state and true or false
+local function FlipCamera180()
+    local char = LocalPlayer.Character
+    if not char then return end
+    local root = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso")
+    if root then
+        pcall(function()
+            root.CFrame = root.CFrame * CFrame.Angles(0, math.pi, 0)
+        end)
+    end
 end
+
+FPS.Flip = FlipCamera180
 
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     if input.KeyCode == FPS.Settings.FlipKey then
-        SetFlip(not FPS.Settings.FlipEnabled)
+        FlipCamera180()
     end
-end)
-
-pcall(function()
-    RunService:BindToRenderStep("W1lteGameYT_Flip180", Enum.RenderPriority.Camera.Value + 1, function()
-        if FPS.Settings.FlipEnabled then
-            Camera.CFrame = Camera.CFrame * CFrame.Angles(0, math.pi, 0)
-        end
-    end)
 end)
 
 FPS:ApplyAll()
@@ -484,7 +480,7 @@ end)
 end)
 
 if not success then
-    warn("[W1lteGameYT FPS] РћС€РёР±РєР° Р·Р°РіСЂСѓР·РєРё: " .. tostring(err))
+    warn("[W1lteGameYT FPS] Ошибка загрузки: " .. tostring(err))
 end
 
 print("[W1lteGameYT FPS] Loaded v1.2! F10 = UI.")
