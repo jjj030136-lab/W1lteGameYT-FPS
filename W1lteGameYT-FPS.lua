@@ -447,7 +447,14 @@ FPS.Flip = function()
     if now - lastFlipTime < 0.3 then return end -- ignore spam presses
     lastFlipTime = now
     pcall(function()
-        cam.CFrame = cam.CFrame * CFrame.Angles(0, math.pi, 0)
+        -- Turn 180 degrees around the WORLD up axis, keeping the current pitch.
+        -- (so looking down stays looking down, no upside-down flip)
+        local L = cam.CFrame.LookVector
+        if L.Magnitude < 0.01 or (math.abs(L.X) < 0.001 and math.abs(L.Z) < 0.001) then
+            return -- looking straight up/down, nothing to flip horizontally
+        end
+        local newLook = Vector3.new(-L.X, L.Y, -L.Z)
+        cam.CFrame = CFrame.lookAt(cam.CFrame.Position, cam.CFrame.Position + newLook)
     end)
 end
 
