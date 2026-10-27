@@ -434,26 +434,27 @@ mainTab:Button("Сбросить всё (вернуть оригинал)", func
 end)
 
 -- ============ 180 DEGREE CAMERA FLIP ============
--- Press the flip key (default C) -> the view instantly rotates 180 degrees, one time.
--- Press again -> rotates back. No per-frame correction, so no camera jitter.
+-- Press the flip key (default C) -> the camera view turns 180 degrees ONE time.
+-- Press again -> turns back. Only the camera is touched (never the character,
+-- so nothing can spin in a loop). Has a small cooldown against double-presses.
 
-local function FlipCamera180()
-    local char = LocalPlayer.Character
-    if not char then return end
-    local root = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso")
-    if root then
-        pcall(function()
-            root.CFrame = root.CFrame * CFrame.Angles(0, math.pi, 0)
-        end)
-    end
+local lastFlipTime = 0
+
+FPS.Flip = function()
+    local cam = workspace.CurrentCamera
+    if not cam then return end
+    local now = os.clock()
+    if now - lastFlipTime < 0.3 then return end -- ignore spam presses
+    lastFlipTime = now
+    pcall(function()
+        cam.CFrame = cam.CFrame * CFrame.Angles(0, math.pi, 0)
+    end)
 end
-
-FPS.Flip = FlipCamera180
 
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     if input.KeyCode == FPS.Settings.FlipKey then
-        FlipCamera180()
+        FPS.Flip()
     end
 end)
 
