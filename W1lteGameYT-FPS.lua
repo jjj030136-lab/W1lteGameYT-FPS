@@ -439,12 +439,8 @@ mainTab:Button("РЎР±СЂРѕСЃРёС‚СЊ РІСЃС‘ (РІРµСЂР�
 end)
 
 -- ============ РАЗВОРОТ КАМЕРЫ НА 180° ============
--- Работает при нажатии кнопки (по умолчанию C) или кнопкой в меню.
--- Пока включено — камера каждый кадр разворачивается на 180 градусов (вид назад).
-
-local function DoFlip()
-    FPS.Settings.FlipEnabled = not FPS.Settings.FlipEnabled
-end
+-- Нажатие кнопки (по умолчанию C) = мгновенный разворот камеры на 180°.
+-- Ещё одно нажатие = разворот обратно. Кнопку можно поменять в FPS.Settings.FlipKey.
 
 local function SetFlip(state)
     FPS.Settings.FlipEnabled = state and true or false
@@ -453,7 +449,7 @@ end
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     if input.KeyCode == FPS.Settings.FlipKey then
-        DoFlip()
+        SetFlip(not FPS.Settings.FlipEnabled)
     end
 end)
 
