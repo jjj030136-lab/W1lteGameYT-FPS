@@ -27,7 +27,8 @@ FPS.Settings = {
     BlurSize = 20,
     Flatten = true,
     ShowFPS = true,
-    FlipKey = Enum.KeyCode.C, -- << flip key, e.g. Enum.KeyCode.X
+    FlipKey = Enum.KeyCode.C,                -- keyboard key for flip (any key, e.g. Enum.KeyCode.X)
+    FlipMouseButton = Enum.UserInputType.MouseButton3, -- MOUSE side button for flip: MouseButton2 = wheel.., MouseButton3 = side
 }
 
 FPS.Originals = {}
@@ -341,7 +342,20 @@ local mainTab = win:Tab("Основное")
 mainTab:Label("> W1lteGameYT FPS Boost v1.2")
 mainTab:Label("F10 - открыть/закрыть меню")
 
-mainTab:Label("C — разворот камеры на 180°")
+local flipLabel = mainTab:Label("")
+
+FPS.UpdateFlipLabel = function()
+    local parts = {}
+    if FPS.Settings.FlipKey then table.insert(parts, FPS.Settings.FlipKey.Name) end
+    if FPS.Settings.FlipMouseButton then table.insert(parts, FPS.Settings.FlipMouseButton.Name .. " (мышь)") end
+    local t = "Разворот 180°: " .. (#parts > 0 and table.concat(parts, " / ") or "не задано")
+    pcall(function()
+        flipLabel.ButtonTitle.Text = t
+    end)
+    return t
+end
+
+FPS.UpdateFlipLabel()
 
 local fpsLabel = mainTab:Label("FPS: --")
 
@@ -421,8 +435,12 @@ mainTab:Slider("Лимит FPS (0 = без лимита)", 0, 1000, FPS.Settings
     FPS:ApplyFPSLimit()
 end)
 
-mainTab:Button("Развернуть камеру на 180° (кнопка: " .. FPS.Settings.FlipKey.Name .. ")", function()
+mainTab:Button("Развернуть камеру на 180° (по нажатию)", function()
     if FPS.Flip then FPS.Flip() end
+end)
+
+mainTab:Button("Задать кнопку разворота (нажми, потом жми клавишу/кнопку мыши)", function()
+    FPS.WaitingForBind = true
 end)
 
 mainTab:Toggle("Показывать FPS", FPS.Settings.ShowFPS, function(val)
@@ -433,19 +451,23 @@ mainTab:Button("Сбросить всё (вернуть оригинал)", func
     FPS:RestoreAll()
 end)
 
--- ============ 180 DEGREE CAMERA FLIP ============
--- Press the flip key (default C) -> the camera view turns 180 degrees ONE time.
--- Press again -> turns back. Only the camera is touched (never the character,
--- so nothing can spin in a loop). Has a small cooldown against double-presses.
+-- ============ 180 DEGREE CAMERA FLIP (rebindable, no delay) ============
+-- Press the flip key / mouse button -> camera turns 180 degrees ONE time, no cooldown.
+-- The flip key can be rebinded to ANY key or ANY mouse button from the menu.
 
-local lastFlipTime = 0
+FPS.WaitingForBind = false
+
+local function GetBindName(v)
+    if v then
+        local ok, n = pcall(function() return v.Name end)
+        if ok and n then return n end
+    end
+    return "?"
+end
 
 FPS.Flip = function()
     local cam = workspace.CurrentCamera
     if not cam then return end
-    local now = os.clock()
-    if now - lastFlipTime < 0.3 then return end -- ignore spam presses
-    lastFlipTime = now
     pcall(function()
         -- Turn 180 degrees around the WORLD up axis, keeping the current pitch.
         -- (so looking down stays looking down, no upside-down flip)
@@ -459,8 +481,23 @@ FPS.Flip = function()
 end
 
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    -- Rebind mode: the next pressed key / mouse button becomes the flip button
+    if FPS.WaitingForBind then
+        if input.KeyCode ~= Enum.KeyCode.Unknown and input.KeyCode then
+            FPS.Settings.FlipKey = input.KeyCode
+            FPS.Settings.FlipMouseButton = nil
+        elseif input.UserInputType then
+            FPS.Settings.FlipMouseButton = input.UserInputType
+            FPS.Settings.FlipKey = nil
+        end
+        FPS.WaitingForBind = false
+        if FPS.UpdateFlipLabel then FPS.UpdateFlipLabel() end
+        return
+    end
     if gameProcessed then return end
-    if input.KeyCode == FPS.Settings.FlipKey then
+    local hitKey = FPS.Settings.FlipKey ~= nil and input.KeyCode == FPS.Settings.FlipKey
+    local hitMouse = FPS.Settings.FlipMouseButton ~= nil and input.UserInputType == FPS.Settings.FlipMouseButton
+    if hitKey or hitMouse then
         FPS.Flip()
     end
 end)
