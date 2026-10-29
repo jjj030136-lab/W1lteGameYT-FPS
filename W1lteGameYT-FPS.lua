@@ -455,6 +455,10 @@ mainTab:Dropdown("Соотношение сторон экрана (растяж
     FPS.ApplyAspect(value)
 end)
 
+mainTab:Toggle("Широкий обзор в узком экране (компенсация FOV)", false, function(val)
+    FPS.Settings.CompensateFov = val
+end)
+
 mainTab:Button("Задать кнопку разворота (нажми, потом жми клавишу/кнопку мыши)", function()
     FPS.WaitingForBind = true
 end)
@@ -588,10 +592,62 @@ local function ApplyAspect(ratioValue)
         end
     end
     UpdateBars()
-    workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(UpdateBars)
+    ApplyFovComp(target)
+    workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
+        UpdateBars()
+        ApplyFovComp(target)
+    end)
 end
 
 FPS.ApplyAspect = ApplyAspect
+
+-- ============ FOV COMPENSATION (wider view inside the narrow aspect) ============
+-- Keeps the same horizontal view angle as the full screen while cropped,
+-- like stretched-res players have. Runs every frame, so it survives respawns
+-- and games that reset FieldOfView.
+FPS.Settings.CompensateFov = false
+
+local aspectFovTarget = nil -- ratio, or nil = off
+
+ApplyFovComp = function(target)
+    aspectFovTarget = target
+end
+
+local function GetFovComp()
+    if not FPS.Settings.CompensateFov or not aspectFovTarget then return nil end
+    local cam = workspace.CurrentCamera
+    if not cam then return nil end
+    local vp = cam.ViewportSize
+    if vp.Y <= 0 then return nil end
+    local current = vp.X / vp.Y
+    if current <= aspectFovTarget then return nil end -- no bars case
+    local v = math.rad(cam.FieldOfView or 70)
+    -- vertical fov needed so that: tan(hFov_full/2) = tan(vNew/2) * target
+    local k = math.tan(v / 2) * (current / aspectFovTarget)
+    return math.clamp(math.deg(2 * math.atan(k)), 1, 120)
+end
+
+RunService.RenderStepped:Connect(function()
+    local cam = workspace.CurrentCamera
+    if not cam then return end
+    local want = GetFovComp()
+    if want then
+        pcall(function()
+            if cam:GetAttribute("W1lite_BaseFov") == nil then
+                cam:SetAttribute("W1lite_BaseFov", cam.FieldOfView)
+            end
+            cam.FieldOfView = want
+        end)
+    else
+        local base = cam:GetAttribute("W1lite_BaseFov")
+        if base then
+            pcall(function()
+                cam.FieldOfView = base
+                cam:SetAttribute("W1lite_BaseFov", nil)
+            end)
+        end
+    end
+end)
 
 workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
     Camera = workspace.CurrentCamera
