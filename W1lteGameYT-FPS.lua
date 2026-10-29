@@ -439,6 +439,10 @@ mainTab:Button("Развернуть камеру на 180° (по нажати�
     if FPS.Flip then FPS.Flip() end
 end)
 
+mainTab:Dropdown("Соотношение сторон экрана (растяжение)", {"Выкл", "4:3", "5:4", "16:10", "3:2", "21:9"}, function(value)
+    FPS.ApplyAspect(value)
+end)
+
 mainTab:Button("Задать кнопку разворота (нажми, потом жми клавишу/кнопку мыши)", function()
     FPS.WaitingForBind = true
 end)
@@ -500,6 +504,85 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if hitKey or hitMouse then
         FPS.Flip()
     end
+end)
+
+-- ============ ASPECT RATIO (stretched screen: 4:3 etc.) ============
+-- Roblox can't change the real monitor resolution, so this mimics 4:3 / 5:4
+-- by drawing black bars on the sides or top/bottom (like stretched-res streams).
+
+FPS.Settings.Aspect = "Выкл"
+
+local aspectGui = nil
+local leftBar, rightBar, topBar, bottomBar
+
+local function DestroyAspectGui()
+    if aspectGui then
+        pcall(function() aspectGui:Destroy() end)
+        aspectGui = nil
+    end
+end
+
+local function ApplyAspect(ratioValue)
+    FPS.Settings.Aspect = ratioValue
+    DestroyAspectGui()
+    local target = nil
+    if ratioValue == "4:3" then target = 4 / 3
+    elseif ratioValue == "5:4" then target = 5 / 4
+    elseif ratioValue == "16:10" then target = 16 / 10
+    elseif ratioValue == "3:2" then target = 3 / 2
+    elseif ratioValue == "21:9" then target = 21 / 9
+    end
+    if not target then return end
+    local player = Players.LocalPlayer
+    if not player then return end
+    aspectGui = Instance.new("ScreenGui")
+    aspectGui.Name = "W1lteGameYT_Aspect"
+    aspectGui.ResetOnSpawn = false
+    aspectGui.IgnoreGuiInset = true
+    aspectGui.DisplayOrder = 2147483647
+    pcall(function() aspectGui.Parent = player:WaitForChild("PlayerGui") end)
+    leftBar = Instance.new("Frame")
+    rightBar = Instance.new("Frame")
+    topBar = Instance.new("Frame")
+    bottomBar = Instance.new("Frame")
+    for _, bar in ipairs({leftBar, rightBar, topBar, bottomBar}) do
+        bar.BackgroundColor3 = Color3.new(0, 0, 0)
+        bar.BorderSizePixel = 0
+        bar.Parent = aspectGui
+    end
+    local function UpdateBars()
+        local cam = workspace.CurrentCamera
+        if not cam or not aspectGui then return end
+        local vp = cam.ViewportSize
+        local current = vp.X / vp.Y
+        if math.abs(current - target) < 0.001 then
+            for _, bar in ipairs({leftBar, rightBar, topBar, bottomBar}) do bar.Size = UDim2.new(0,0,0,0) end
+            return
+        end
+        if target < current then
+            -- screen is WIDER than target -> black bars on the left/right
+            local gameWidth = vp.Y * target
+            local barW = (vp.X - gameWidth) / 2
+            leftBar.Size = UDim2.new(0, barW, 1, 0); leftBar.Position = UDim2.new(0, 0, 0, 0)
+            rightBar.Size = UDim2.new(0, barW, 1, 0); rightBar.Position = UDim2.new(0, vp.X - barW, 0, 0)
+            topBar.Size = UDim2.new(0,0,0,0); bottomBar.Size = UDim2.new(0,0,0,0)
+        else
+            -- screen is NARROWER than target -> black bars on the top/bottom
+            local gameHeight = vp.X / target
+            local barH = (vp.Y - gameHeight) / 2
+            topBar.Size = UDim2.new(1, 0, 0, barH); topBar.Position = UDim2.new(0,0,0,0)
+            bottomBar.Size = UDim2.new(1, 0, 0, barH); bottomBar.Position = UDim2.new(0, 0, 0, vp.Y - barH)
+            leftBar.Size = UDim2.new(0,0,0,0); rightBar.Size = UDim2.new(0,0,0,0)
+        end
+    end
+    UpdateBars()
+    workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(UpdateBars)
+end
+
+FPS.ApplyAspect = ApplyAspect
+
+workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
+    Camera = workspace.CurrentCamera
 end)
 
 FPS:ApplyAll()
