@@ -342,18 +342,30 @@ local mainTab = win:Tab("Основное")
 mainTab:Label("> W1lteGameYT FPS Boost v1.2")
 mainTab:Label("F10 - открыть/закрыть меню")
 
-local flipLabel = mainTab:Label("")
+local function GetLabelText(label)
+    local ok, t = pcall(function() return label.ButtonTitle.Text end)
+    if ok and t then return t end
+    return nil
+end
 
-FPS.UpdateFlipLabel = function()
+local function BuildFlipText()
     local parts = {}
     if FPS.Settings.FlipKey then table.insert(parts, FPS.Settings.FlipKey.Name) end
     if FPS.Settings.FlipMouseButton then table.insert(parts, FPS.Settings.FlipMouseButton.Name .. " (мышь)") end
-    local t = "Разворот 180°: " .. (#parts > 0 and table.concat(parts, " / ") or "не задано")
-    pcall(function()
-        flipLabel.ButtonTitle.Text = t
-    end)
+    return "Разворот 180°: " .. (#parts > 0 and table.concat(parts, " / ") or "не задано")
+end
+
+local flipLabel = mainTab:Label(BuildFlipText())
+
+FPS.UpdateFlipLabel = function()
+    local t = BuildFlipText()
+    pcall(function() flipLabel.ButtonTitle.Text = t end)
+    pcall(function() flipLabel.Title.Text = t end)
+    pcall(function() flipLabel.Text = t end)
     return t
 end
+
+FPS.GetFlipText = BuildFlipText
 
 FPS.UpdateFlipLabel()
 
